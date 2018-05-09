@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Initiative Tracker</title>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- JQuery -->
+    <script src="/lib/jquery/js/jquery-2.1.3.min.js" type="text/javascript"></script>
+
+    <!-- bootstrap 2 ou 3 -->
+    <script src="/lib/bootstrap-3/js/bootstrap.min.js" type="text/javascript"></script>
+    <link href="/lib/bootstrap-3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/js/utils-bs3.js?t=090512" type="text/javascript"></script>
+
+    <!-- TOAST -->
+    <link rel="stylesheet" href="/lib/jquery/jquery.toast/jquery.toast.min.css" type="text/css">
+    <script src="/lib/jquery/jquery.toast/jquery.toast.min.js" type="text/javascript"></script>
+
+    <!-- CSS -->
+    <link href="/lib/font-awesome-4.5/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/noPrint.css" rel="stylesheet">
+
+    <!-- CSS GERAL E BOOTSTRAP-FIX -->
+    <link href="/css/default1-bs3.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+
+    <a onclick="add()" class="btn btn-default">
+        <i class="fa fa-plus-square"></i>
+        Novo Personagem
+    </a>
+
+    <a onclick="desenha()" class="btn btn-default">
+        <i class="fa fa-refresh"></i>
+        Redesenhar
+    </a>
+
+    <a onclick="novaBriga()" class="btn btn-default">
+        <i class="fa fa-bullhorn"></i>
+        Nova Batalha
+    </a>
+
+    <div id="main"></div>
+    <hr>
+    <div id="atrasados"></div>
+
+    <a onclick="novoRoud()" class="btn btn-primary">
+        <i class="fa fa-plus-sqare"></i>
+        Novo Round
+    </a>
+
+<br><br><br><br>
+    <a onclick="hardreset()" class="btn btn-danger">
+        <i class="fa fa-trash"></i>
+        Hard Reset
+    </a>
+
+
+    <script type="text/javascript">
+
+        var players = [];
+        var contador = 0;
+
+        function save(){
+            localStorage.setItem('players', JSON.stringify(players));
+        }
+
+        function load(){
+            if(localStorage.getItem('players')){
+                players=JSON.parse(localStorage.getItem('players'));
+                desenha();
+            }
+        }
+
+        function add() {
+            if(players.length){
+                var ord = players[players.length-1].ordem+1;
+            }else{
+                var ord = 0;
+            }
+            players.push({nome:'',iniciativa:0,ordem:ord,status:'1',round:0});
+            desenha();
+        }
+
+        function desenha(){
+            segundaOrdem();
+            $('#main').html('');
+            $('#atrasados').html('');
+
+            $.each(players,function(i,itm){
+                var pl = $('<div>').addClass('alert').css('display','table').css('width','100%')
+                .append( $('<b>').html('Nome:').css('text-align','right').addClass('col-sm-1') )
+                .append( $('<input>').attr('type','text').attr('id','ipt'+'nome'+i).val(itm.nome).attr('onblur','commit('+i+',"nome")').addClass('col-sm-2')  )
+                .append( $('<b>').html('Iniciativa:').css('text-align','right').addClass('col-sm-1') )
+                .append( $('<input>').attr('type','text').attr('id','ipt'+'iniciativa'+i).val(itm.iniciativa).attr('onblur','commit('+i+',"iniciativa")').addClass('col-sm-1') )
+
+
+                .append( $('<span>').attr('id','spnOrd'+i).html(itm.ordem).css('text-align','right').addClass('col-sm-1') )
+                .append( $('<a>').attr('onClick','desce('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-down') ) )
+                .append( $('<a>').attr('onClick','sobe('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-up') ) )
+                .append('<br>')
+
+                .append( $('<span>').html(itm.round).css('text-align','center').addClass('col-sm-1').css('font-size','14px') )
+
+                .append( $('<select>').attr('id','ipt'+'status'+i)
+                    .append( $('<option>').attr('value','0').html('Caído') )
+                    .append( $('<option>').attr('value','1').html('Jogando') )
+                    .append( $('<option>').attr('value','2').html('Já jogou') )
+                    .append( $('<option>').attr('value','3').html('Atrasou') )
+                    .append( $('<option>').attr('value','4').html('Morto') )
+                    .val( itm.status )
+                    .attr('onchange','commit('+i+',"status")')
+                    .addClass('col-sm-1 col-sm-offset-3')
+                 )
+                .append( $('<a>').addClass('btn btn-default').attr('onClick','next('+i+')').append( $('<i>').addClass('fa fa-check-circle') ).append('Jogou').addClass('col-sm-1'))
+                .append( $('<a>').addClass('btn btn-default').attr('onClick','delay('+i+')').append( $('<i>').addClass('fa fa-cubes') ).append('Atrasou').addClass('col-sm-1'))
+                .append( $('<a>').addClass('btn btn-danger').attr('onClick','del('+i+')').append( $('<i>').addClass('fa fa-trash') ).append('Excluir').addClass('col-sm-offset-1 col-sm-1'))
+
+
+                switch(itm.status){
+                    case '0': pl.addClass('well');break;
+                    case '1': pl.addClass('alert-info');break;
+                    case '2': pl.addClass('alert-success');break;
+                    case '3': pl.addClass('alert-warning');break;
+                    case '4': pl.addClass('alert-danger');break;
+                }
+
+                if(itm.status == '3'){
+                    $('#atrasados').prepend(pl);
+                }else{
+                    $('#main').prepend(pl);
+                }
+
+            });
+        }
+
+
+
+        /*ORDENAR*/
+        function primeiraOrdem(){
+            players.sort(compare1);
+
+            //max = players.length;
+            max = 0;
+            $.each(players,function(i,itm){
+                players[i].ordem = max;
+                //max--;
+                max++;
+            });
+        }
+
+        function segundaOrdem(){
+            if(players.length > 1) players.sort(compare2);
+        }
+
+        function compare1(a,b) {
+          if ( parseInt(a.iniciativa) < parseInt(b.iniciativa) )
+            return -1;
+          if (parseInt(a.iniciativa) > parseInt(b.iniciativa) )
+            return 1;
+          return 0;
+        }
+
+        function compare2(a,b) {
+          if (a.ordem < b.ordem)
+            return -1;
+          if (a.ordem > b.ordem)
+            return 1;
+          return 0;
+        }
+        /**/
+
+
+
+        /* salvar dados alterados */
+        function sd(){save(); desenha();}
+
+        function commit(i,campo){
+            players[i][campo] = $('#ipt'+campo+i).val();
+            if(campo == 'iniciativa'){
+                primeiraOrdem();
+            }
+            sd();
+        }
+
+        function sobe(i){
+            players[i].ordem++;
+            sd();
+        }
+        function desce(i){
+            players[i].ordem--;
+            sd();
+        }
+
+        function next(i){
+            players[i].status = '2';
+            players[i].round++;
+            sd();
+        }
+
+        function delay(i){
+            players[i].status = '3';
+            sd();
+        }
+
+        function novoRoud(){
+            $.each(players,function(i,itm){
+                if(players[i].status == '2'){
+                    players[i].status = '1';
+                }
+            });
+            sd();
+        }
+
+        function novaBriga(){
+            if (confirm('Remover Mortos?')) {
+                var _tmp=[];
+                $.each(players,function(i,itm){
+                    if(players[i].status != '4'){
+                        _tmp.push(itm);
+                    }
+                });
+                players = _tmp;
+            }
+
+            $.each(players,function(i,itm){
+                players[i].status = '1';
+                players[i].round = 0;
+                players[i].iniciativa = '0';
+            });
+
+            sd();
+        }
+
+        function del(x){
+            var _tmp = [];
+            $.each(players,function(i,itm){
+                if(x!=i){
+                    _tmp.push(itm);
+                }
+            });
+            players = _tmp;
+            sd();
+        }
+
+        function hardreset(){
+            players = [];
+            localStorage.setItem('players', JSON.stringify(players));
+        }
+
+
+        load();
+    </script></body>

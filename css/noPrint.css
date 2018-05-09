@@ -1,0 +1,27 @@
+.do-print{ display: none; }
+
+@media print { 
+	/*Remover Barra superiora*/
+	#topologo{ display: none; } 
+	.navbar-fixed-top{ display: none; } 
+	/*Classe de não impressão*/
+	.no-print{ display: none !important; }
+	.do-print{ display: table !important;}	
+	
+	/*Não imprimir links nem abreviações*/
+	a[href]:after { content: none !important; } 
+	abbr[title]:after { content: none !important; }
+	
+	/*não mostrar opção de edição*/
+	.icon-edit { display: none !important; }
+	.fa-edit { display: none !important; }
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
