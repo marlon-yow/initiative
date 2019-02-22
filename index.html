@@ -41,10 +41,6 @@
     </a>
     
     <table id='main' class='table'></table>
-    
-    <hr>
-    
-    <table id='atrasados' class='table'></table>
 
     <a onclick="novoRoud()" class="btn btn-primary">
         <i class="fa fa-plus-sqare"></i>
@@ -71,9 +67,18 @@
 
     <script type="text/javascript">
 
+        //i18n
+        var headerTitles = [/*'Ordem',*/'Rnd','Nome','Inici.','Status','Char Stat','Move','Remove'];
+        var statTitles = {1:'Jogando',2:'Já jogou',3:'Atrasou',4:'Morto'};
+        var pyStatTitles = {1:'Normal',2:'Morrendo',3:'Estabilizado',4:'Dormindo',5:'Staggered',6:'Envenenado',7:'Sangrando',8:'Stunado'};
+        
         var players = [];
         var historicPlayers = [];
         var contador = 0;
+        var hd = $('<tr>');
+        $.each(headerTitles,function(x,z){
+            hd.append($('<th>').html(z));
+        });
 
         function save(){
             localStorage.setItem('players', JSON.stringify(players));
@@ -108,8 +113,7 @@
         function desenha(){
             segundaOrdem();
 
-            $('#main').html('');
-            $('#atrasados').html('');
+            $('#main').html('');            
 
             $.each(players,function(i,itm){
 
@@ -117,51 +121,35 @@
 
                 var pl = $('<tr>').addClass('alert').css('width','100%')
 
-                .append($('<td>')
+                /*.append($('<td>')
+                    .append( $('<span>').html(itm.ordem).css('text-align','right').addClass('label label-warning') )
+                )*/
+                
+                .append($('<td>').addClass('col-xs-1')
                     .append( $('<span>').html(itm.round).css('text-align','center').css('font-size','14px').addClass('badge pull-left') )
                 )
-                .append($('<td>')
-                    .append( $('<span>').html(itm.ordem).css('text-align','right').addClass('label label-warning') )
-                )
-                .append($('<td>')
+                
+                .append($('<td>').addClass('col-xs-2')
                     .append( $('<input>').attr('type','text').attr('id','ipt'+'nome'+i).val(itm.nome)
                         .attr('onblur','commit('+i+',"nome")').css('width','100%') )
                 )
-                .append($('<td>')
+                .append($('<td>').addClass('col-xs-1')
                     .append( $('<input>').attr('type','text').attr('id','ipt'+'iniciativa'+i).val(itm.iniciativa)
                         .attr('onblur','commit('+i+',"iniciativa")').css('width','100%') )
                 )
 
-                .append($('<td>')
-                    .append( $('<select>').attr('id','ipt'+'status'+i)
-                        .append( $('<option>').attr('value','1').html('Jogando') )
-                        .append( $('<option>').attr('value','2').html('Já jogou') )
-                        .append( $('<option>').attr('value','3').html('Atrasou') )
-                        .append( $('<option>').attr('value','4').html('Morto') )
-                        .val( itm.status )
-                        .attr('onchange','commit('+i+',"status")')
-                     )
+                .append($('<td>').addClass('col-xs-3')
+                    .append( $('<select>').attr('id','ipt'+'status'+i).addClass('slStat').attr('onchange','commit('+i+',"status")'))
                     .append( $('<a>').addClass('btn btn-default').attr('onClick','next('+i+')').append( $('<i>').addClass('fa fa-check-circle') ).append('Jogou'))
                     .append( $('<a>').addClass('btn btn-default').attr('onClick','delay('+i+')').append( $('<i>').addClass('fa fa-cubes') ).append('Atrasou'))
                 )
 
 
-                .append($('<td>')
-                    .append( $('<select>').attr('id','ipt'+'physicalStat'+i)                        
-                        .append( $('<option>').attr('value','1').html('Normal') )
-                        .append( $('<option>').attr('value','2').html('Morrendo') )
-                        .append( $('<option>').attr('value','3').html('Estabilizado') )
-                        .append( $('<option>').attr('value','4').html('Dormindo') )
-                        .append( $('<option>').attr('value','5').html('Staggered') )
-                        .append( $('<option>').attr('value','6').html('Envenenado') )
-                        .append( $('<option>').attr('value','7').html('Sangrando') )
-                        .append( $('<option>').attr('value','8').html('Stunado') )
-                        .val( itm.physicalStat )
-                        .attr('onchange','commit('+i+',"physicalStat")')
-                     )
+                .append($('<td>').addClass('col-xs-2')
+                    .append( $('<select>').attr('id','ipt'+'physicalStat'+i).addClass('slPyStat').attr('onchange','commit('+i+',"physicalStat")'))
                 )
 
-                .append($('<td>').addClass('col-xs-1')                    
+                .append($('<td>').addClass('col-xs-2')                    
                     .append( $('<a>').attr('onClick','sobe('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-up') ) )
                     .append( $('<a>').attr('onClick','desce('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-down') ) )
                 )
@@ -178,16 +166,30 @@
                     case '4': pl.addClass('alert-danger');break;
                 }
 
-                if(itm.status == '3'){
-                    $('#atrasados').prepend(pl);
+                if(itm.status == '3' || itm.status == '4'){
+                    $('#main').append(pl);
                 }else{
                     $('#main').prepend(pl);
                 }
 
             });
             
-            $('#main').prepend('<tr><th>Ordem</th><th>Round</th><th>Nome</th><th>Iniciativa</th><th>Status</th><th></th><th></th></tr>');
-            $('#atrasados').prepend('<tr><th>Ordem</th><th>Round</th><th>Nome</th><th>Iniciativa</th><th>Status</th><th></th><th></th></tr>');
+            $('#main').prepend(hd); 
+            
+            //fill selects            
+            $.each(statTitles,function(x,z){
+                $('.slStat').append( $('<option>').attr('value',x).html(z) );
+            });
+            
+            $.each(pyStatTitles,function(x,z){
+                $('.slPyStat').append( $('<option>').attr('value',x).html(z) );
+            });
+            
+            $.each(players,function(i,itm){
+                $('#ipt'+'status'+i).val( itm.status );
+                $('#ipt'+'physicalStat'+i).val( itm.physicalStat );
+            });
+                
 
             desenhaHis();
         }
