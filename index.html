@@ -23,7 +23,7 @@
     <!-- CSS GERAL E BOOTSTRAP-FIX -->
     <link href="css/default1-bs3.css" rel="stylesheet" type="text/css">
     </head>
-    <body>
+    <body style='padding: 2px'>
 
     <a onclick="add()" class="btn btn-default">
         <i class="fa fa-plus-square"></i>
@@ -39,10 +39,12 @@
         <i class="fa fa-bullhorn"></i>
         Nova Batalha
     </a>
-
-    <div id="main"></div>
+    
+    <table id='main' class='table'></table>
+    
     <hr>
-    <div id="atrasados"></div>
+    
+    <table id='atrasados' class='table'></table>
 
     <a onclick="novoRoud()" class="btn btn-primary">
         <i class="fa fa-plus-sqare"></i>
@@ -71,6 +73,7 @@
 
         var players = [];
         var historicPlayers = [];
+        var contador = 0;
 
         function save(){
             localStorage.setItem('players', JSON.stringify(players));
@@ -98,7 +101,7 @@
 
             if(!name){name='';}
 
-            players.push({nome:name,iniciativa:0,ordem:ord,status:'1',round:0});
+            players.push({nome:name,iniciativa:0,ordem:ord,status:'1',physicalStat:'1',round:0});
             desenha();
         }
 
@@ -112,25 +115,25 @@
 
                 players[i].ordem = i;
 
-                var pl = $('<div>').addClass('alert').css('display','table').css('width','100%')
+                var pl = $('<tr>').addClass('alert').css('width','100%')
 
-                .append($('<div>').addClass('col-xs-1')
+                .append($('<td>')
                     .append( $('<span>').html(itm.round).css('text-align','center').css('font-size','14px').addClass('badge pull-left') )
                 )
-                .append($('<div>').addClass('col-xs-3')
-                    .append( $('<b>').html('Nome:').css('text-align','right') )
+                .append($('<td>')
+                    .append( $('<span>').html(itm.ordem).css('text-align','right').addClass('label label-warning') )
+                )
+                .append($('<td>')
                     .append( $('<input>').attr('type','text').attr('id','ipt'+'nome'+i).val(itm.nome)
                         .attr('onblur','commit('+i+',"nome")').css('width','100%') )
                 )
-                .append($('<div>').addClass('col-xs-2')
-                    .append( $('<b>').html('Iniciativa:').css('text-align','right') )
+                .append($('<td>')
                     .append( $('<input>').attr('type','text').attr('id','ipt'+'iniciativa'+i).val(itm.iniciativa)
                         .attr('onblur','commit('+i+',"iniciativa")').css('width','100%') )
                 )
 
-                .append($('<div>').addClass('col-xs-3')
+                .append($('<td>')
                     .append( $('<select>').attr('id','ipt'+'status'+i)
-                        .append( $('<option>').attr('value','0').html('Caído') )
                         .append( $('<option>').attr('value','1').html('Jogando') )
                         .append( $('<option>').attr('value','2').html('Já jogou') )
                         .append( $('<option>').attr('value','3').html('Atrasou') )
@@ -142,19 +145,33 @@
                     .append( $('<a>').addClass('btn btn-default').attr('onClick','delay('+i+')').append( $('<i>').addClass('fa fa-cubes') ).append('Atrasou'))
                 )
 
-                .append($('<div>').addClass('col-xs-1')
-                    //.append( $('<span>').html(itm.ordem).css('text-align','right').addClass('label label-warning') )
+
+                .append($('<td>')
+                    .append( $('<select>').attr('id','ipt'+'physicalStat'+i)                        
+                        .append( $('<option>').attr('value','1').html('Normal') )
+                        .append( $('<option>').attr('value','2').html('Morrendo') )
+                        .append( $('<option>').attr('value','3').html('Estabilizado') )
+                        .append( $('<option>').attr('value','4').html('Dormindo') )
+                        .append( $('<option>').attr('value','5').html('Staggered') )
+                        .append( $('<option>').attr('value','6').html('Envenenado') )
+                        .append( $('<option>').attr('value','7').html('Sangrando') )
+                        .append( $('<option>').attr('value','8').html('Stunado') )
+                        .val( itm.physicalStat )
+                        .attr('onchange','commit('+i+',"physicalStat")')
+                     )
+                )
+
+                .append($('<td>').addClass('col-xs-1')                    
                     .append( $('<a>').attr('onClick','sobe('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-up') ) )
                     .append( $('<a>').attr('onClick','desce('+i+')').addClass('btn btn-default').append( $('<i>').addClass('fa fa-caret-square-o-down') ) )
                 )
 
-                .append($('<div>').addClass('col-xs-1')
+                .append($('<td>').addClass('col-xs-1')
                     .append( $('<a>').addClass('btn btn-danger').attr('onClick','del('+i+')').append( $('<i>').addClass('fa fa-trash') ) )
                 )
 
 
-                switch(itm.status){
-                    case '0': pl.addClass('well');break;
+                switch(itm.status){                    
                     case '1': pl.addClass('alert-info');break;
                     case '2': pl.addClass('alert-success');break;
                     case '3': pl.addClass('alert-warning');break;
@@ -168,6 +185,9 @@
                 }
 
             });
+            
+            $('#main').prepend('<tr><th>Ordem</th><th>Round</th><th>Nome</th><th>Iniciativa</th><th>Status</th><th></th><th></th></tr>');
+            $('#atrasados').prepend('<tr><th>Ordem</th><th>Round</th><th>Nome</th><th>Iniciativa</th><th>Status</th><th></th><th></th></tr>');
 
             desenhaHis();
         }
@@ -187,58 +207,141 @@
         }
 
         /*ORDENAR*/
-            function primeiraOrdem(){
-                players.sort(compare1);
+        function primeiraOrdem(){
+            players.sort(compare1);
 
-                //max = players.length;
-                max = 0;
-                $.each(players,function(i,itm){
-                    players[i].ordem = max;
-                    //max--;
-                    max++;
-                });
-            }
+            //max = players.length;
+            max = 0;
+            $.each(players,function(i,itm){
+                players[i].ordem = max;
+                //max--;
+                max++;
+            });
+        }
 
-            function segundaOrdem(){
-                if(players.length > 1) players.sort(compare2);
-            }
+        function segundaOrdem(){
+            if(players.length > 1) players.sort(compare2);
+        }
 
-            function compare1(a,b) {
-              if ( parseInt(a.iniciativa) < parseInt(b.iniciativa) )
-                return -1;
-              if (parseInt(a.iniciativa) > parseInt(b.iniciativa) )
-                return 1;
-              return 0;
-            }
+        function compare1(a,b) {
+          if ( parseInt(a.iniciativa) < parseInt(b.iniciativa) )
+            return -1;
+          if (parseInt(a.iniciativa) > parseInt(b.iniciativa) )
+            return 1;
+          return 0;
+        }
 
-            function compare2(a,b) {
-              if (a.ordem < b.ordem)
-                return -1;
-              if (a.ordem > b.ordem)
-                return 1;
-              return 0;
-            }
+        function compare2(a,b) {
+          if (a.ordem < b.ordem)
+            return -1;
+          if (a.ordem > b.ordem)
+            return 1;
+          return 0;
+        }
         /**/
 
-        /* save redraw */
+
+
+        /* salvar dados alterados */
         function sd(){save(); desenha();}
 
-        /*save person info*/
         function commit(i,campo){
+            var oldStat = players[i].status;
             players[i][campo] = $('#ipt'+campo+i).val();
             if(campo == 'iniciativa'){
                 primeiraOrdem();
+            }
+
+            if(players[i].status==2 && oldStat!=2){
+                players[i].round++;
+            }
+
+            console.log(campo);
+
+            if(campo == 'status'){
+                var newOrder = players.length;
+                var atualPlayer = players[i];
+                    var atualPlayerndex = null;
+                players.reverse();
+                
+                console.log('atualPlayer:',atualPlayer);
+
+                $.each(players,function(j,jtm){ //first the already played ones
+                    if(atualPlayer != players[j]){
+                        if(players[j].status == '2'){
+                            players[j].ordem = newOrder;
+                            console.log('jogou',players[j],newOrder);
+                            newOrder--;
+                        }
+                    }else{
+                        atualPlayerndex = j;
+                    }
+                });
+
+                if(atualPlayer.status == 2){
+                    //then the played player
+                    players[atualPlayerndex].ordem = newOrder;
+                    console.log('set player jogou',players[atualPlayerndex],newOrder);
+                    newOrder--;
+                }
+
+                $.each(players,function(j,jtm){ //then the not played players
+                    if(atualPlayer != players[j]){
+                        if(players[j].status == '1'){
+                            players[j].ordem = newOrder;
+                            console.log('nãojogou',players[j],newOrder);
+                            newOrder--;
+                        }
+                    }
+                });
+
+                if(atualPlayer.status == 1){
+                    //then the played player
+                    players[atualPlayerndex].ordem = newOrder;
+                    console.log('set player naojogou',players[atualPlayerndex],newOrder);
+                    newOrder--;
+                }
+
+                $.each(players,function(j,jtm){ //then the delayed ones
+                    if(atualPlayer != players[j]){
+                        if(players[j].status == '3' ){
+                            players[j].ordem = newOrder;
+                            console.log('delayed',players[j],newOrder);
+                            newOrder--;
+                        }
+                    }
+                });
+
+                $.each(players,function(j,jtm){ //then the dead ones
+                    if(atualPlayer != players[j]){
+                        if(players[j].status==4){ //dead ones
+                            players[j].ordem = newOrder;
+                            console.log('dead',players[j],newOrder);
+                            newOrder--;
+                        }
+                    }
+                });
+                
+                if(atualPlayer.status != 1 && atualPlayer.status != 2){
+                    //then the played player
+                    players[atualPlayerndex].ordem = newOrder;
+                    console.log('set player naojogou',players[atualPlayerndex],newOrder);                    
+                }
+
+                segundaOrdem();
             }
             sd();
         }
 
         /* move person up*/
         function sobe(i){
-            players[i].ordem++;
-            if(players[i+1]){
-                players[i+1].ordem--;
+            if(players.length-1 != i){ //is not the first one
+                players[i].ordem++;
+                if(players[i+1]){
+                    players[i+1].ordem--;
+                }
+                sd();
             }
-            sd();
         }
         /* move person down*/
         function desce(i){
@@ -257,19 +360,18 @@
         }
 
         function next(i){
-            players[i].status = '2';
-            players[i].round++;
-            sd();
+            $('#iptstatus'+i).val(2);
+            commit(i,'status');
         }
 
         function delay(i){
-            players[i].status = '3';
-            sd();
+            $('#iptstatus'+i).val(3);
+            commit(i,'status');
         }
 
         function novoRoud(){
             $.each(players,function(i,itm){
-                if(players[i].status == '2'){
+                if(players[i].status == '2' || players[i].status == '3'){
                     players[i].status = '1';
                 }
             });
@@ -315,6 +417,7 @@
             players = _tmp;
             sd();
         }
+
 
         /* history of played */
             function sendTohistoricPlayers(name) {
@@ -374,4 +477,4 @@
 </div>
 
 
-    </body>
+</body>
